@@ -255,16 +255,16 @@ float cos_score(vector<float> &a, vector<float> &b){
   return vm / (sqrt(na) * sqrt(nb));
 }
 
-/*
-int feature_match(vector<float> &fea, vector<vector<float>> &fea_set){
+
+int feature_match(vector<float> &fea, vector<vector<float>> &feature_DB, vector<int> &objID_DB){
   int id = -1;
-  int id_index = fea_set[0].size();//256,最后一位放instance id
   float cos_sim = 0.0;
-  float thre = 0.6;
-  for(int i=0; i < fea_set.size(); i ++){
-    if(cos_score(fea, fea_set[i]) > cos_sim ){
-      id = fea_set[i][id_index];
-      cos_sim = cos_score(fea, fea_set[i]);
+  float thre = 0.8;
+  for(int i=0; i < feature_DB.size(); i ++){
+    if(cos_score(fea, feature_DB[i]) > cos_sim ){
+      id = objID_DB[i];
+      cos_sim = cos_score(fea, feature_DB[i]);
+      cout << " curr cos_sim is " << cos_sim << endl;
     }
   }
   if(cos_sim >= thre){
@@ -274,7 +274,7 @@ int feature_match(vector<float> &fea, vector<vector<float>> &fea_set){
     return -1;
   }
 }
-*/
+
 int main(int argc,char * argv[]){
 
   string modelpath = "/home/zherlock/c++ example/image retrieval/files/yolov5s.torchscript";
@@ -384,23 +384,23 @@ int main(int argc,char * argv[]){
   cout << "line 346, op is " << op.sizes() << op << endl;
 
   //vector<vector<float>> obj_feature(10,vector<float>(255));
-  vector<float> obj_feature(255);
-  vector<int> obj_IDs(20);
+  vector<float> cur_feature(255);
+  //vector<int> obj_IDs(20);
 
-  vector<vector<float>> obj_set(50, vector<float>(256));
-  vector<int> obj_index(50);
+  vector<vector<float>> feature_DB(50, vector<float>(256));
+  vector<int> objID_DB(50);
   
   string feature_path = "/home/zherlock/c++ example/image retrieval/files/subfeatures_aver.txt";
   f.open(feature_path);
   int cnt = 0;
   while (std::getline(f,str)){
     vector<string> mp = split(str,":");
-    obj_index[cnt] = atoi(mp[0].c_str());
+    objID_DB[cnt] = atoi(mp[0].c_str());
     str = mp[1];
     mp = split(str,",");
     cout << "mp len is " << mp.size() << endl;
     for(int i=0; i < mp.size(); i++){
-      feature_set[cnt][i] = atof(mp[i].c_str());
+      feature_DB[cnt][i] = atof(mp[i].c_str());
     }
     cnt += 1;
   }
@@ -408,10 +408,10 @@ int main(int argc,char * argv[]){
 
 
 
-/*
+
   for(int i = 0; i < op.sizes()[0]; i++){
     at::Tensor box = op.index({i, Slice(None, 4)}) / 8.0;
-    cout << "line 349, " << box << endl;
+    cout << "line 349, box is " << box << endl;
     int x1 = round(box.index({0}).item().toFloat());
     int y1 = round(box.index({1}).item().toFloat());
     int x2 = round(box.index({2}).item().toFloat());
@@ -420,20 +420,20 @@ int main(int argc,char * argv[]){
     at::Tensor feature = fea_0.index({Slice(), Slice(), Slice(x1,x2), Slice(y1,y2)});
 
     //at::Tensor feature = y_0.index({0})
-    cout << "line 357 " << fea_0.sizes()  << endl;
-    cout << "line 358, " << feature.sizes()  << endl;
+    cout << "line 357 original all mat feature size is " << fea_0.sizes()  << endl;
+    cout << "line 358, original submat feature size is" << feature.sizes()  << endl;
     at::Tensor temp = F::adaptive_max_pool2d(feature, F::AdaptiveMaxPool2dFuncOptions(1));
-    cout << "line 360, " << temp.sizes()  << endl;
+    cout << "line 360, after pooling feature is " << temp.sizes()  << endl;
     for(int k=0; k < temp.sizes()[1]; k++){
       //obj_feature[i][k] = temp.index({Slice(),k,Slice(), Slice()}).item().toFloat();
-      obj_feature[k] = temp.index({Slice(),k,Slice(), Slice()}).item().toFloat();
+      cur_feature[k] = temp.index({Slice(),k,Slice(), Slice()}).item().toFloat();
     }
 
-    int instance_ID = feature_match(obj_feature, feature_set);
+    int instance_ID = feature_match(cur_feature, feature_DB, objID_DB);
     cout << "line 426, id is " << instance_ID << endl;
 //    at::Tensor max_pool_feature = F
   }
- */
+
   int img_shape[2] = {tensor_img.sizes()[2], tensor_img.sizes()[3]};
   int im0_shape[3] = {im0.rows, im0.cols, im0.channels()};
   at::Tensor temp;
