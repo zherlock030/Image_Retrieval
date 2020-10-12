@@ -5141,6 +5141,8 @@ unistd.h
 -
 mutex
 -
+math.h
+-
 
 /home/zherlock/opencv-2.4.9/modules/core/include/opencv2/core/core.hpp
 opencv2/core/types_c.h

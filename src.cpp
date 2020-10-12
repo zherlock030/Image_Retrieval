@@ -1,5 +1,5 @@
-//yolov5s的调用
-//删除冗余注释，优化代码,
+//yolov5s调用后，根据深度特征，在数据库里找到对应的物体
+//
 
 #include <memory>
 #include <torch/script.h>
@@ -15,17 +15,18 @@
 #include "sys/time.h"
 #include <unistd.h>
 #include <mutex>
+#include <math.h>
 
 using namespace std;
 using namespace cv;
 using namespace torch::indexing;
-
+namespace F = torch::nn::functional;
 
 
 vector<string> split(const string& str, const string& delim) {
 	vector<string> res;
 	if("" == str) return res;
-	char * strs = new char[str.length() + 1] ;
+	char * strs = new char[str.length() + 1];
 	strcpy(strs, str.c_str());
 
 	char * d = new char[delim.length() + 1];
@@ -242,9 +243,41 @@ at::Tensor scale_coords(int img1_shape[], at::Tensor coords, int img0_shape[]){
   return coords;
 }
 
+float cos_score(vector<float> &a, vector<float> &b){
+  float vm = 0.0;//vector multiply
+  float na = 0.0;//norm of vector A
+  float nb = 0.0;//norm of vector B
+  for(int i = 0; i < a.size(); i++){
+    vm += a[i]*b[i];
+    na += a[i]*a[i];
+    nb += b[i]*b[i];
+  }
+  return vm / (sqrt(na) * sqrt(nb));
+}
+
+/*
+int feature_match(vector<float> &fea, vector<vector<float>> &fea_set){
+  int id = -1;
+  int id_index = fea_set[0].size();//256,最后一位放instance id
+  float cos_sim = 0.0;
+  float thre = 0.6;
+  for(int i=0; i < fea_set.size(); i ++){
+    if(cos_score(fea, fea_set[i]) > cos_sim ){
+      id = fea_set[i][id_index];
+      cos_sim = cos_score(fea, fea_set[i]);
+    }
+  }
+  if(cos_sim >= thre){
+    return id;
+  }
+  else{
+    return -1;
+  }
+}
+*/
 int main(int argc,char * argv[]){
 
-  string modelpath = "/home/zherlock/c++ example/object detection/files/yolov5s.torchscript";
+  string modelpath = "/home/zherlock/c++ example/image retrieval/files/yolov5s.torchscript";
   long start = time_in_ms();
   torch::jit::script::Module model = torch::jit::load(modelpath);
   cout << "it took " << time_in_ms() - start << " ms to load the model" << endl;
@@ -253,7 +286,7 @@ int main(int argc,char * argv[]){
   torch::jit::setGraphExecutorOptimize(false);
 
   
-  string img_path = "/home/zherlock/c++ example/object detection/files/test.png";
+  string img_path = "/home/zherlock/c++ example/image retrieval/files/1.png";
   //string img_path = "/home/zherlock/InstanceDetection/yolov5_old/test.png";
   Mat img = imread(img_path);
   Mat im0 = imread(img_path);
@@ -286,7 +319,7 @@ int main(int argc,char * argv[]){
 
   //read anchor_grid
   ifstream f;
-  string gridpath = "/home/zherlock/c++ example/object detection/files/anchor_grid.txt";
+  string gridpath = "/home/zherlock/c++ example/image retrieval/files/anchor_grid.txt";
   f.open(gridpath);
   string str;
   while (std::getline(f,str)){
@@ -331,7 +364,7 @@ int main(int argc,char * argv[]){
 
   //read label information
   std::vector<string> labels;
-  string labelpath = "/home/zherlock/c++ example/object detection/files/labels.txt";
+  string labelpath = "/home/zherlock/c++ example/image retrieval/files/labels.txt";
   f.open(labelpath);
   while (std::getline(f,str)){
     labels.push_back(str);
@@ -349,6 +382,33 @@ int main(int argc,char * argv[]){
     return -1;
   }
   cout << "line 346, op is " << op.sizes() << op << endl;
+
+  //vector<vector<float>> obj_feature(10,vector<float>(255));
+  vector<float> obj_feature(255);
+  vector<int> obj_IDs(20);
+
+  vector<vector<float>> obj_set(50, vector<float>(256));
+  vector<int> obj_index(50);
+  
+  string feature_path = "/home/zherlock/c++ example/image retrieval/files/subfeatures_aver.txt";
+  f.open(feature_path);
+  int cnt = 0;
+  while (std::getline(f,str)){
+    vector<string> mp = split(str,":");
+    obj_index[cnt] = atoi(mp[0].c_str());
+    str = mp[1];
+    mp = split(str,",");
+    cout << "mp len is " << mp.size() << endl;
+    for(int i=0; i < mp.size(); i++){
+      feature_set[cnt][i] = atof(mp[i].c_str());
+    }
+    cnt += 1;
+  }
+  f.close();
+
+
+
+/*
   for(int i = 0; i < op.sizes()[0]; i++){
     at::Tensor box = op.index({i, Slice(None, 4)}) / 8.0;
     cout << "line 349, " << box << endl;
@@ -362,10 +422,18 @@ int main(int argc,char * argv[]){
     //at::Tensor feature = y_0.index({0})
     cout << "line 357 " << fea_0.sizes()  << endl;
     cout << "line 358, " << feature.sizes()  << endl;
+    at::Tensor temp = F::adaptive_max_pool2d(feature, F::AdaptiveMaxPool2dFuncOptions(1));
+    cout << "line 360, " << temp.sizes()  << endl;
+    for(int k=0; k < temp.sizes()[1]; k++){
+      //obj_feature[i][k] = temp.index({Slice(),k,Slice(), Slice()}).item().toFloat();
+      obj_feature[k] = temp.index({Slice(),k,Slice(), Slice()}).item().toFloat();
+    }
 
-    at::Tensor max_pool_feature = torch::nn::functional
+    int instance_ID = feature_match(obj_feature, feature_set);
+    cout << "line 426, id is " << instance_ID << endl;
+//    at::Tensor max_pool_feature = F
   }
- 
+ */
   int img_shape[2] = {tensor_img.sizes()[2], tensor_img.sizes()[3]};
   int im0_shape[3] = {im0.rows, im0.cols, im0.channels()};
   at::Tensor temp;
