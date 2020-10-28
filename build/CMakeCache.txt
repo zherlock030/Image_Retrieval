@@ -148,7 +148,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=yolov5s
+CMAKE_PROJECT_NAME:STATIC=image_retrieval
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -242,10 +242,10 @@ TORCH_LIBRARY:FILEPATH=/home/zherlock/SLAM/libtorch/libtorch-abi/lib/libtorch.so
 Torch_DIR:PATH=/home/zherlock/SLAM/libtorch/libtorch-abi/share/cmake/Torch
 
 //Value Computed by CMake
-yolov5s_BINARY_DIR:STATIC=/home/zherlock/c++ example/image retrieval/build
+image_retrieval_BINARY_DIR:STATIC=/home/zherlock/c++ example/image retrieval/build
 
 //Value Computed by CMake
-yolov5s_SOURCE_DIR:STATIC=/home/zherlock/c++ example/image retrieval
+image_retrieval_SOURCE_DIR:STATIC=/home/zherlock/c++ example/image retrieval
 
 
 ########################
