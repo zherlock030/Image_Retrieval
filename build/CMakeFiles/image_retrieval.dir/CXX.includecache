@@ -6,6 +6,22 @@
 
 #IncludeRegexTransform: 
 
+../include/retrievaler.h
+string
+-
+vector
+-
+math.h
+-
+fstream
+-
+iostream
+-
+unistd.h
+-
+cstring
+-
+
 ../include/utils.h
 string
 -
@@ -5158,9 +5174,31 @@ wchar.h
 
 /home/zherlock/anaconda3/envs/detectron2/include/python3.7m/weakrefobject.h
 
-/home/zherlock/c++ example/image retrieval/src/yolo.cpp
+/home/zherlock/c++ example/image retrieval/include/retrievaler.h
+string
+-
+vector
+-
+math.h
+-
+fstream
+-
+iostream
+-
+unistd.h
+-
+cstring
+-
+
+/home/zherlock/c++ example/image retrieval/src/main.cpp
 yolo.h
 /home/zherlock/c++ example/image retrieval/src/yolo.h
+retrievaler.h
+/home/zherlock/c++ example/image retrieval/src/retrievaler.h
+
+/home/zherlock/c++ example/image retrieval/src/retrievaler.cpp
+/home/zherlock/c++ example/image retrieval/include/retrievaler.h
+-
 utils.h
 /home/zherlock/c++ example/image retrieval/src/utils.h
 
